@@ -45,8 +45,11 @@ window.iconphoto(False, icon_tk)
 
 
 def save_text():
-    input = text_field.get("1.0", 'end-1c')
-    print(input)
+    """ copy all text_field contents to clipboard"""
+    inp = text_field.get("1.0", 'end-1c')
+    window.clipboard_clear()
+    window.clipboard_append(inp)
+    print(inp)
 
 
 tic = DoubleVar(value=0)
@@ -108,11 +111,12 @@ def runner():
     stop = True
     if thr1.is_alive():
         print("something's wrong, thread still active")
+        stop = True
     else:
         print('thread stopped')
-        stop = False
-        thr = threading.Thread(target=disappear_init)
-        thr.start()
+    stop = False
+    thr = threading.Thread(target=disappear_init)
+    thr.start()
 
 
 head_label = Label(window, text="Start typing the line below:", font=main_font, bg=main_color)
