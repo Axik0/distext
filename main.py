@@ -39,7 +39,7 @@ window.configure(background=main_color)
 window.geometry("520x370")
 window.minsize(520, 370)
 window.maxsize(520, 370)
-window.title("Disappearing text")
+window.title("Disappear ... or not?")
 icon_tk = ImageTk.PhotoImage(icon)
 window.iconphoto(False, icon_tk)
 
