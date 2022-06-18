@@ -94,9 +94,7 @@ def disappear_init():
         # measure the time since the last keypress event (if it ever happened)
         # wait variable has made this condition useless, but let it be, just in case
         delta = toc-tic.get() if tic.get() else 0
-        print(delta)
         if delta >= delay:
-            print('end')
             text_field.delete("1.0", "end")
             break
         # or just wait until we fill a whole text_field
