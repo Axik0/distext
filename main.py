@@ -36,9 +36,9 @@ main_font = ("Helvetica", 16)
 # GUI preliminaries
 window = Tk()
 window.configure(background=main_color)
-window.geometry("520x400")
-# window.minsize(500, 300)
-# window.maxsize(500, 500)
+window.geometry("520x370")
+window.minsize(520, 370)
+window.maxsize(520, 370)
 window.title("Disappearing text")
 icon_tk = ImageTk.PhotoImage(icon)
 window.iconphoto(False, icon_tk)
@@ -47,9 +47,11 @@ window.iconphoto(False, icon_tk)
 def save_text():
     """ copy all text_field contents to clipboard"""
     inp = text_field.get("1.0", 'end-1c')
+    # if this button was pressed, stop the loop
+    global stop
+    stop = True
     window.clipboard_clear()
     window.clipboard_append(inp)
-    print(inp)
 
 
 tic = DoubleVar(value=0)
@@ -77,15 +79,22 @@ def disappear_init():
     save_butt.configure(state=DISABLED)
     # get delay value from the slider
     delay = window.dset.get()
-    # catch  inputs from a keyboard on the fly
-    # bind keys and callback of the proper charset
+    # retrieve the rules label and update its text
+    info_label.grid(row=1, column=0, columnspan=2, pady=5)
+    info_label.configure(text=f"Start typing and don't stop for more than {delay} s")
+    # bind keys and callback of the proper charset to catch inputs from keyboard
     binder(check, charset)
     # get text_field dimensions to measure text length limit
     length_limit = text_field.cget('height') * text_field.cget('width')
+    window.wait_variable(tic)
+    # remove the label from our layout completely, if you just delete its text it is still a bit visible
+    info_label.grid_forget()
     while not stop:
         toc = time.perf_counter()
         # measure the time since the last keypress event (if it ever happened)
+        # wait variable has made this condition useless, but let it be, just in case
         delta = toc-tic.get() if tic.get() else 0
+        print(delta)
         if delta >= delay:
             print('end')
             text_field.delete("1.0", "end")
@@ -95,9 +104,14 @@ def disappear_init():
             # stop here and allow to save input
             save_butt.configure(state=NORMAL)
             break
-        elif delay*0.7 <= delta <= delay*0.75:
+        # allow to save progress but don't stop now (will be stopped later by the stop flag in keypress event)
+        elif chars.get() >= length_limit/2:
+            save_butt.configure(state=NORMAL)
+        # blinking states, one makes all the text gray before it's gone, the second case reverts it
+        # those values are experimental, larger intervals tend to distort the frequency of theblinking cursor
+        elif delay*0.7 <= delta <= delay*0.72:
             text_field.configure(fg=text_color_ina)
-        elif 0 <= delta <= delay*0.15:
+        elif 0 <= delta <= delay*0.02:
             text_field.configure(fg=text_color_a)
     # revert all variables, disable text_field and unbind keys
     text_field.configure(state=DISABLED)
@@ -110,7 +124,7 @@ def runner():
     global stop
     stop = True
     if thr1.is_alive():
-        print("something's wrong, thread still active")
+        print("something's wrong, thread still active, try again")
         stop = True
     else:
         print('thread stopped')
@@ -119,7 +133,7 @@ def runner():
     thr.start()
 
 
-head_label = Label(window, text="Start typing the line below:", font=main_font, bg=main_color)
+head_label = Label(window, text="Disappearing text", font=main_font, bg=main_color)
 head_label.grid(row=0, column=0, columnspan=2, pady=5)
 
 text_field = Text(window, bg=focus_color, fg=text_color_a, height=10, width=40, font=main_font, relief=SUNKEN)
@@ -132,18 +146,19 @@ dl = Scale(window, from_=1, to=10, orient=HORIZONTAL, length=250, tickinterval=1
            troughcolor=focus_color, highlightbackground=main_color, bg=main_color)
 dl.grid(row=2, column=0, sticky=N+S+W+E, padx=30)
 
+info_label = Label(window, text=f"Start typing and don't stop for more than {dl.get()} s", font=main_font, bg=focus_color)
+info_label.grid(row=1, column=0, columnspan=2, pady=5)
+
 rfr_tk = ImageTk.PhotoImage(rfr)
 cp_tk = ImageTk.PhotoImage(cp)
 
 setup_container = Frame(window)
 setup_container.grid(row=2, column=1)
 
-
 retry_butt = Button(setup_container, text='Retry', image=rfr_tk, command=runner, bg=main_color)
 retry_butt.grid(row=0, column=0, ipady=5, ipadx=5, pady=20, sticky=N+S+W+E)
 save_butt = Button(setup_container, text='Retry', image=cp_tk, command=save_text, bg=main_color, state=DISABLED)
 save_butt.grid(row=0, column=1, ipady=5, ipadx=5, padx=15, pady=20, sticky=N+S+W+E)
-
 
 
 if __name__ == "__main__":
